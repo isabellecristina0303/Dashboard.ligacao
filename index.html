@@ -71,6 +71,26 @@
   .upload-zone:hover { border-color: var(--accent); background: #0a1f10; }
   #fileInput { display: none; }
 
+  .filter-toggle {
+    display: flex; align-items: center; gap: 8px;
+    background: #050f08; border: 1px solid #1a3322; border-radius: 7px;
+    padding: 7px 14px; cursor: pointer; user-select: none;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .filter-toggle:hover, .filter-toggle.active { border-color: var(--accent); background: #0a1f10; }
+  .filter-toggle span { font-size: 0.77rem; font-weight: 600; color: #86efac; transition: color 0.12s; }
+  .filter-toggle.active span { color: var(--accent); }
+  .toggle-switch {
+    width: 32px; height: 18px; background: #1a3322; border-radius: 99px;
+    position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .filter-toggle.active .toggle-switch { background: var(--accent); }
+  .toggle-switch::after {
+    content: ''; position: absolute; width: 12px; height: 12px;
+    background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s;
+  }
+  .filter-toggle.active .toggle-switch::after { transform: translateX(14px); }
+
   .main { padding: 24px 36px; max-width: 1600px; margin: 0 auto; }
 
   .summary {
@@ -174,14 +194,20 @@
       <p id="fileLabel">Nenhum arquivo carregado</p>
     </div>
   </div>
-  <label class="upload-zone" for="fileInput">
-    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-      <polyline points="17 8 12 3 7 8"/>
-      <line x1="12" y1="3" x2="12" y2="15"/>
-    </svg>
-    Importar CSV
-  </label>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div class="filter-toggle" id="filterToggle" onclick="toggleFilter()">
+      <div class="toggle-switch"></div>
+      <span>Ignorar &lt; 1 min</span>
+    </div>
+    <label class="upload-zone" for="fileInput">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      Importar CSV
+    </label>
+  </div>
   <input type="file" id="fileInput" accept=".csv">
 </header>
 
@@ -232,7 +258,7 @@
 </div>
 
 <script>
-let allAgents = [], sortField = 'csat', sortDir = -1;
+let allAgents = [], sortField = 'csat', sortDir = -1, filterActive = false, rawRows = [], colAtend = null;
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
@@ -258,6 +284,12 @@ function splitLine(line, sep) {
   }
   res.push(cur); return res;
 }
+function toggleFilter() {
+  filterActive = !filterActive;
+  const btn = document.getElementById('filterToggle');
+  btn.classList.toggle('active', filterActive);
+  if (rawRows.length) { allAgents = processRows(rawRows); renderTable(); }
+}
 function t2s(t) {
   if (!t) return 0;
   const p = t.split(':');
@@ -267,6 +299,7 @@ function s2mm(s) {
   return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.round(s%60)).padStart(2,'0')}`;
 }
 function processRows(rows) {
+  rawRows = rows;
   const keys = Object.keys(rows[0]||{});
   const fc = (...ns) => keys.find(k=>ns.some(n=>k.toLowerCase().includes(n.toLowerCase())));
   const cA=fc('Agente','agente'), cE=fc('Espera','espera'), cT=fc('Atendimento','atend'), cV=fc('Avaliação','avaliacao','aval','nota');
@@ -275,6 +308,7 @@ function processRows(rows) {
   for (const r of rows) {
     const ag=r[cA]||'';
     if (!ag||ag.toLowerCase().includes('yago daniel')) continue;
+    if (filterActive && cT && t2s(r[cT]) < 60) continue;
     if (!g[ag]) g[ag]=[];
     g[ag].push(r);
   }

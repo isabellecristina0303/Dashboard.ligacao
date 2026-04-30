@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consultor de Retenção — iGreen</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:      #000000;
+    --surface: #050f08;
+    --surface2:#0a0a0a;
+    --border:  #1a3322;
+    --accent:  #22c55e;
+    --text:    #ffffff;
+    --muted:   #4ade80;
+    --good:    #22c55e;
+    --mid:     #a3e635;
+    --bad:     #f87171;
+    --tag-bg:  #052e16;
+    --tag-border: #14532d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: #000;
+    border-bottom: 1px solid #1a3322;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px #22c55e88; flex-shrink: 0; }
+  .logo h1 { font-size: 1rem; font-weight: 700; color: #fff; }
+  .logo h1 span { color: var(--accent); }
+  .logo p { font-size: 0.65rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; opacity: 0.6; margin-top: 1px; }
+
+  /* ── LAYOUT ── */
+  .layout { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 57px); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: #050f08;
+    border-right: 1px solid #1a3322;
+    padding: 20px 0;
+    overflow-y: auto;
+    position: sticky;
+    top: 57px;
+    height: calc(100vh - 57px);
+  }
+
+  .sidebar-section { margin-bottom: 6px; }
+  .sidebar-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    opacity: 0.5;
+    padding: 10px 20px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { background: #0a1a0f; }
+  .nav-item.active { background: #0a1a0f; border-left-color: var(--accent); }
+  .nav-item .icon { font-size: 1rem; flex-shrink: 0; width: 22px; text-align: center; }
+  .nav-item .label { font-size: 0.8rem; font-weight: 500; color: #d1fae5; line-height: 1.3; }
+  .nav-item.active .label { color: var(--accent); font-weight: 600; }
+
+  /* profile filter */
+  .profile-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 20px 10px;
+  }
+  .ptag {
+    background: #0a1a0f;
+    border: 1px solid #1a3322;
+    color: #86efac;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .ptag:hover, .ptag.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+
+  /* search */
+  .search-wrap { padding: 0 16px 14px; }
+  .search-wrap input {
+    width: 100%;
+    background: #000;
+    border: 1px solid #1a3322;
+    color: #fff;
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.12s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: #4ade80; opacity: 0.4; }
+
+  /* ── CONTENT ── */
+  .content { padding: 28px 36px; overflow-y: auto; }
+
+  /* ── CARD ── */
+  .objection-card { display: none; }
+  .objection-card.visible { display: block; }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .card-emoji { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+  .card-title h2 { font-size: 1.3rem; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+  .card-title p { font-size: 0.8rem; color: var(--muted); margin-top: 4px; opacity: 0.8; }
+
+  /* tags row */
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+  .tag {
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    color: #4ade80;
+    padding: 3px 10px;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .tag.yellow { background: #1a2e10; border-color: #365314; color: #bef264; }
+  .tag.red    { background: #2d0a0a; border-color: #7f1d1d; color: #fca5a5; }
+
+  /* step blocks */
+  .steps { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+  .step {
+    background: var(--surface);
+    border: 1px solid #1a3322;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #000;
+    border-bottom: 1px solid #1a3322;
+  }
+  .step-icon { font-size: 1rem; }
+  .step-label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    opacity: 0.7;
+  }
+  .step-body { padding: 16px; }
+  .step-body p { font-size: 0.875rem; color: #e2fce6; line-height: 1.65; margin-bottom: 10px; }
+  .step-body p:last-child { margin-bottom: 0; }
+
+  /* script quote */
+  .script {
+    background: #000;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 0.875rem;
+    color: #d1fae5;
+    line-height: 1.6;
+    font-style: italic;
+  }
+  .script strong { font-style: normal; color: var(--accent); font-weight: 600; }
+
+  /* variants */
+  .variants { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .variant {
+    background: #000;
+    border: 1px solid #1a3322;
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .variant-label { font-size: 0.63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); opacity: 0.65; margin-bottom: 6px; }
+  .variant p { font-size: 0.82rem; color: #d1fae5; line-height: 1.55; font-style: italic; }
+
+  /* impact phrases */
+  .impact-box {
+    background: var(--surface);
+    border: 1px solid #1a3322;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .impact-box h4 { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); opacity: 0.65; margin-bottom: 12px; }
+  .impact-list { display: flex; flex-direction: column; gap: 8px; }
+  .impact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #000;
+    border-left: 2px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 9px 12px;
+    font-size: 0.82rem;
+    color: #d1fae5;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* alert box */
+  .alert {
+    background: #1a2e10;
+    border: 1px solid #365314;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: #bef264;
+    line-height: 1.55;
+    margin: 10px 0;
+    display: flex;
+    gap: 8px;
+  }
+  .alert-icon { flex-shrink: 0; }
+
+  .alert-red {
+    background: #2d0a0a;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+  }
+
+  /* profile cards */
+  .profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .profile-card {
+    background: var(--surface);
+    border: 1px solid #1a3322;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .profile-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .profile-card-emoji { font-size: 1.5rem; }
+  .profile-card h3 { font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+  .profile-card .behaviors { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .profile-card .behavior { font-size: 0.78rem; color: #86efac; padding-left: 10px; position: relative; }
+  .profile-card .behavior::before { content: '·'; position: absolute; left: 0; color: var(--accent); }
+  .profile-card .rule { font-size: 0.78rem; background: #000; border-left: 2px solid var(--accent); padding: 7px 10px; border-radius: 0 5px 5px 0; color: #d1fae5; font-style: italic; }
+
+  /* section title */
+  .section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); opacity: 0.6; margin: 22px 0 12px; }
+
+  /* home screen */
+  .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 8px; }
+  .home-card {
+    background: var(--surface);
+    border: 1px solid #1a3322;
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .home-card:hover { border-color: var(--accent); background: #0a1a0f; }
+  .home-card .hc-icon { font-size: 1.6rem; margin-bottom: 8px; }
+  .home-card .hc-title { font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .home-card .hc-desc { font-size: 0.72rem; color: #4ade80; opacity: 0.7; line-height: 1.4; }
+
+  /* divider */
+  hr { border: none; border-top: 1px solid #1a3322; margin: 22px 0; }
+
+  /* tabs removed */
+
+  /* ── NOTES EDITOR ── */
+  .notes-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .notes-top h4 { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); opacity: 0.65; }
+  .btn-add { background: var(--accent); border: none; color: #000; padding: 6px 14px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; font-family: 'Inter', sans-serif; cursor: pointer; transition: opacity 0.1s; }
+  .btn-add:hover { opacity: 0.85; }
+  .notes-list { display: flex; flex-direction: column; gap: 10px; }
+  .note-item { background: #000; border: 1px solid #1a3322; border-radius: 8px; overflow: hidden; transition: border-color 0.12s; }
+  .note-item:focus-within { border-color: var(--accent); }
+  .note-item-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #050f08; border-bottom: 1px solid #1a3322; }
+  .note-type-select { background: #0a1a0f; border: 1px solid #1a3322; color: #86efac; padding: 3px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; outline: none; }
+  .note-type-select option { background: #000; }
+  .note-label-input { flex: 1; background: transparent; border: none; color: #86efac; font-size: 0.72rem; font-weight: 600; font-family: 'Inter', sans-serif; outline: none; text-transform: uppercase; letter-spacing: 0.07em; }
+  .note-label-input::placeholder { color: #4ade80; opacity: 0.3; }
+  .btn-del { background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.75rem; opacity: 0.4; padding: 2px 4px; transition: opacity 0.1s; font-family: 'Inter', sans-serif; }
+  .btn-del:hover { opacity: 1; }
+  .note-textarea { width: 100%; background: transparent; border: none; color: #d1fae5; font-size: 0.85rem; font-family: 'Inter', sans-serif; line-height: 1.6; padding: 12px 14px; resize: vertical; min-height: 70px; outline: none; font-style: italic; }
+  .note-textarea::placeholder { color: #4ade80; opacity: 0.25; font-style: italic; }
+  .notes-empty { text-align: center; padding: 36px 20px; color: var(--muted); opacity: 0.3; font-size: 0.83rem; }
+  .notes-empty span { display: block; font-size: 1.8rem; margin-bottom: 8px; }
+
+  /* new custom objection form in sidebar */
+  .sidebar-add-btn { display: flex; align-items: center; gap: 8px; padding: 8px 20px; cursor: pointer; color: var(--accent); font-size: 0.75rem; font-weight: 600; opacity: 0.6; transition: opacity 0.1s; border: none; background: none; width: 100%; text-align: left; font-family: 'Inter', sans-serif; }
+  .sidebar-add-btn:hover { opacity: 1; }
+  .custom-obj-item { display: flex; align-items: center; gap: 6px; padding: 8px 20px; cursor: pointer; border-left: 2px solid transparent; transition: background 0.1s; }
+  .custom-obj-item:hover { background: #0a1a0f; }
+  .custom-obj-item.active { background: #0a1a0f; border-left-color: var(--accent); }
+  .custom-obj-item .c-icon { font-size: 0.9rem; flex-shrink: 0; width: 22px; text-align: center; }
+  .custom-obj-item .c-label { font-size: 0.78rem; font-weight: 500; color: #d1fae5; flex: 1; }
+  .custom-obj-item .del-obj { background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.7rem; opacity: 0; transition: opacity 0.1s; padding: 2px; }
+  .custom-obj-item:hover .del-obj { opacity: 0.6; }
+  .custom-obj-item .del-obj:hover { opacity: 1 !important; }
+
+  /* ── INLINE EDITING ── */
+  [contenteditable="false"] {
+    cursor: pointer;
+    position: relative;
+    transition: outline 0.12s, background 0.12s;
+    border-radius: 4px;
+    outline: 1px dashed transparent;
+  }
+  [contenteditable="false"]:hover {
+    outline: 1px dashed #22c55e55;
+    background: rgba(34,197,94,0.04);
+  }
+  [contenteditable="false"]:hover::after {
+    content: '✏️';
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    font-size: 0.7rem;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  [contenteditable="true"].editing {
+    outline: 2px solid var(--accent) !important;
+    background: rgba(34,197,94,0.06) !important;
+    border-radius: 4px;
+    cursor: text;
+  }
+  [contenteditable="true"].editing::after { display: none; }
+
+  /* ── ADD BLOCK BUTTON ── */
+  .add-block-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px dashed #1a3322;
+    color: var(--accent);
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.12s;
+    margin-top: 4px;
+    opacity: 0.65;
+    width: 100%;
+    justify-content: center;
+  }
+  .add-block-btn:hover { border-color: var(--accent); opacity: 1; background: #0a1a0f; }
+
+  /* ── CUSTOM BLOCKS ── */
+  .custom-blocks { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+  .custom-block {
+    background: #000;
+    border: 1px solid #1a3322;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.12s;
+  }
+  .custom-block:focus-within { border-color: var(--accent); }
+  .cb-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #050f08; border-bottom: 1px solid #1a3322; }
+  .cb-type-sel { background: #0a1a0f; border: 1px solid #1a3322; color: #86efac; padding: 3px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; outline: none; }
+  .cb-type-sel option { background: #000; }
+  .cb-label-input { flex: 1; background: transparent; border: none; color: #86efac; font-size: 0.72rem; font-weight: 600; font-family: 'Inter', sans-serif; outline: none; text-transform: uppercase; letter-spacing: 0.07em; }
+  .cb-label-input::placeholder { color: #4ade80; opacity: 0.3; }
+  .cb-del { background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.75rem; opacity: 0.4; padding: 2px 4px; transition: opacity 0.1s; font-family: 'Inter', sans-serif; }
+  .cb-del:hover { opacity: 1; }
+  .cb-textarea { width: 100%; background: transparent; border: none; color: #d1fae5; font-size: 0.875rem; font-family: 'Inter', sans-serif; line-height: 1.6; padding: 12px 14px; resize: vertical; min-height: 72px; outline: none; font-style: italic; }
+  .cb-textarea::placeholder { color: #4ade80; opacity: 0.25; font-style: italic; }
+
+  /* ── CUSTOM OBJ SIDEBAR ── */
+  .custom-obj-item { display: flex; align-items: center; gap: 6px; padding: 8px 20px; cursor: pointer; border-left: 2px solid transparent; transition: background 0.1s; }
+  .custom-obj-item:hover { background: #0a1a0f; }
+  .custom-obj-item.active { background: #0a1a0f; border-left-color: var(--accent); }
+  .custom-obj-item .c-icon { font-size: 0.9rem; flex-shrink: 0; width: 22px; text-align: center; }
+  .custom-obj-item .c-label { font-size: 0.78rem; font-weight: 500; color: #d1fae5; flex: 1; }
+  .custom-obj-item .del-obj { background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.7rem; opacity: 0; transition: opacity 0.1s; padding: 2px; }
+  .custom-obj-item:hover .del-obj { opacity: 0.6; }
+  .custom-obj-item .del-obj:hover { opacity: 1 !important; }
+  .sidebar-add-btn { display: flex; align-items: center; gap: 8px; padding: 8px 20px; cursor: pointer; color: var(--accent); font-size: 0.75rem; font-weight: 600; opacity: 0.6; transition: opacity 0.1s; border: none; background: none; width: 100%; text-align: left; font-family: 'Inter', sans-serif; }
+  .sidebar-add-btn:hover { opacity: 1; }
+
+  /* ── FORM ── */
+  .form-inp { flex: 1; min-width: 160px; background: #000; border: 1px solid #1a3322; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; font-family: 'Inter', sans-serif; outline: none; }
+  .form-inp:focus { border-color: var(--accent); }
+  .form-inp::placeholder { color: #4ade80; opacity: 0.35; }
+  .form-ta { width: 100%; background: #000; border: 1px solid #1a3322; color: #d1fae5; padding: 10px 12px; border-radius: 6px; font-size: 0.82rem; font-family: 'Inter', sans-serif; line-height: 1.6; min-height: 80px; resize: vertical; outline: none; font-style: italic; }
+  .form-ta:focus { border-color: var(--accent); }
+  .form-ta::placeholder { color: #4ade80; opacity: 0.3; font-style: italic; }
+  .btn-save-obj { background: var(--accent); border: none; color: #000; padding: 7px 18px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; font-family: 'Inter', sans-serif; cursor: pointer; }
+  .btn-cancel-obj { background: none; border: 1px solid #1a3322; color: #86efac; padding: 7px 14px; border-radius: 6px; font-size: 0.78rem; font-family: 'Inter', sans-serif; cursor: pointer; }
+
+  /* Edit hint in corner */
+  .edit-hint {
+    font-size: 0.63rem;
+    color: var(--muted);
+    opacity: 0.4;
+    margin-bottom: 10px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid #1a3322; }
+    .variants { grid-template-columns: 1fr; }
+    .content { padding: 20px 16px; }
+    header { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div>
+      <h1>Consultor de <span>Retenção</span></h1>
+      <p data-key="variant_1" contenteditable="false" onclick="enableEdit(this)">iGreen Energy · Conexão Green</p>
+    </div>
+  </div>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#4ade80;opacity:0.5;">Use enquanto estiver em linha 📞</div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="🔍  Buscar objeção..." oninput="filterNav(this.value)">
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Perfil do Cliente</div>
+      <div class="profile-tags">
+        <span class="ptag active" onclick="filterProfile('todos', this)">Todos</span>
+        <span class="ptag" onclick="filterProfile('idoso', this)">50+ / Idoso</span>
+        <span class="ptag" onclick="filterProfile('conta-unica', this)">Conta Única</span>
+        <span class="ptag" onclick="filterProfile('duas-contas', this)">Duas Contas</span>
+        <span class="ptag" onclick="filterProfile('troca-tit', this)">C/ Troca Tit.</span>
+        <span class="ptag" onclick="filterProfile('sem-troca', this)">Sem Troca Tit.</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Objeções</div>
+      <div id="navList">
+        <div class="nav-item" onclick="showCard('home')"><span class="icon">🏠</span><span class="label">Início</span></div>
+        <div class="nav-item" data-tags="desconto economia baixo" onclick="showCard('obj1')"><span class="icon">💸</span><span class="label">Não vejo economia / desconto baixo</span></div>
+        <div class="nav-item" data-tags="prazo demora ainda não começou" onclick="showCard('obj2')"><span class="icon">⏳</span><span class="label">Ainda não tive desconto / demora</span></div>
+        <div class="nav-item" data-tags="duas contas boleto organização" onclick="showCard('obj3')"><span class="icon">🧾</span><span class="label">Não gosto de ter duas contas</span></div>
+        <div class="nav-item" data-tags="mudar endereço mudança" onclick="showCard('obj4')"><span class="icon">🔄</span><span class="label">Vou me mudar / não preciso mais</span></div>
+        <div class="nav-item" data-tags="não usando vantagem benefício" onclick="showCard('obj5')"><span class="icon">📉</span><span class="label">Não estou usando / não vejo vantagem</span></div>
+        <div class="nav-item" data-tags="não entendi como funciona confuso" onclick="showCard('obj6')"><span class="icon">😕</span><span class="label">Não entendi como funciona</span></div>
+        <div class="nav-item" data-tags="caro não compensa valor" onclick="showCard('obj7')"><span class="icon">💰</span><span class="label">Está caro / não compensa</span></div>
+        <div class="nav-item" data-tags="problema insatisfeito reclamação" onclick="showCard('obj8')"><span class="icon">😤</span><span class="label">Tive problema / estou insatisfeito</span></div>
+        <div class="nav-item" data-tags="decidido cancelar definitivo" onclick="showCard('obj9')"><span class="icon">🧠</span><span class="label">Cliente decidido a cancelar</span></div>
+        <div class="nav-item" data-tags="placas solar instalou" onclick="showCard('obj10')"><span class="icon">☀️</span><span class="label">Instalei / vou instalar placas solares</span></div>
+        <div class="nav-item" data-tags="filho neto familiar ligando outro" onclick="showCard('obj11')"><span class="icon">👨‍👩‍👧</span><span class="label">Familiar ligando pelo idoso</span></div>
+        <div class="nav-item" data-tags="conta única migrar unificar boleto único" onclick="showCard('obj12')"><span class="icon">📋</span><span class="label">Quer migrar para conta única</span></div>
+        <div class="nav-item" data-tags="desconto maior aumentar percentual" onclick="showCard('obj13')"><span class="icon">📈</span><span class="label">Quer aumento de desconto</span></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Referência</div>
+      <div class="nav-item" onclick="showCard('perfis')"><span class="icon">🎭</span><span class="label">Perfis de Cliente</span></div>
+      <div class="nav-item" onclick="showCard('impacto')"><span class="icon">🔥</span><span class="label">Frases de Alto Impacto</span></div>
+      <div class="nav-item" onclick="showCard('sequencia')"><span class="icon">🚀</span><span class="label">Sequência Campeã</span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Minhas Objeções</div>
+      <div id="customObjList"></div>
+      <button class="sidebar-add-btn" onclick="openNewObjForm()">＋ Nova objeção</button>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- HOME -->
+    <div class="objection-card visible" id="card-home">
+      <div class="card-header">
+        <div class="card-emoji">🎯</div>
+        <div class="card-title">
+          <h2>Consultor de Retenção</h2>
+          <p data-key="variant_2" contenteditable="false" onclick="enableEdit(this)">Selecione a objeção do cliente ao lado ou clique em um atalho abaixo</p>
+        </div>
+      </div>
+
+      <div class="alert">
+        <span class="alert-icon">💡</span>
+        <span><strong>Sequência que converte:</strong> Escuta → Sondagem → Explicação simples → Solução → Confirmação. Nunca pule a sondagem.</span>
+      </div>
+
+      <div class="section-title">Objeções mais comuns</div>
+      <div class="home-grid">
+        <div class="home-card" onclick="showCard('obj1')"><div class="hc-icon">💸</div><div class="hc-title">Não vejo economia</div><div class="hc-desc">Desconto baixo ou não percebido</div></div>
+        <div class="home-card" onclick="showCard('obj2')"><div class="hc-icon">⏳</div><div class="hc-title">Ainda não tive desconto</div><div class="hc-desc">Demora no início do benefício</div></div>
+        <div class="home-card" onclick="showCard('obj3')"><div class="hc-icon">🧾</div><div class="hc-title">Duas contas</div><div class="hc-desc">Incômodo com dois boletos</div></div>
+        <div class="home-card" onclick="showCard('obj6')"><div class="hc-icon">😕</div><div class="hc-title">Não entendi</div><div class="hc-desc">Confuso com o funcionamento</div></div>
+        <div class="home-card" onclick="showCard('obj7')"><div class="hc-icon">💰</div><div class="hc-title">Está caro</div><div class="hc-desc">Sensação de que não compensa</div></div>
+        <div class="home-card" onclick="showCard('obj9')"><div class="hc-icon">🧠</div><div class="hc-title">Decidido a cancelar</div><div class="hc-desc">Script coringa para último recurso</div></div>
+      </div>
+
+      <div class="section-title">Situações especiais</div>
+      <div class="home-grid">
+        <div class="home-card" onclick="showCard('obj10')"><div class="hc-icon">☀️</div><div class="hc-title">Instalou placas solares</div><div class="hc-desc">Impacto no prazo de cancelamento</div></div>
+        <div class="home-card" onclick="showCard('obj11')"><div class="hc-icon">👨‍👩‍👧</div><div class="hc-title">Familiar ligando</div><div class="hc-desc">Cliente idoso com representante</div></div>
+        <div class="home-card" onclick="showCard('obj12')"><div class="hc-icon">📋</div><div class="hc-title">Migrar conta única</div><div class="hc-desc">Quem pode e como fazer</div></div>
+        <div class="home-card" onclick="showCard('obj13')"><div class="hc-icon">📈</div><div class="hc-title">Aumento de desconto</div><div class="hc-desc">Regras por fornecedora</div></div>
+      </div>
+    </div>
+
+    <!-- OBJ 1: Não vejo economia -->
+    <div class="objection-card" id="card-obj1">
+      <div class="card-header">
+        <div class="card-emoji">💸</div>
+        <div class="card-title">
+          <h2>"Não estou vendo economia / desconto baixo"</h2>
+          <p data-key="variant_3" contenteditable="false" onclick="enableEdit(this)">Cliente sente que o desconto é pequeno ou não está percebendo diferença na conta</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag">Todas as modalidades</span>
+        <span class="tag yellow">Atenção: verificar histórico</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">1. Sondagem — entenda antes de argumentar</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_1" contenteditable="false" onclick="enableEdit(this)">"Me conta um pouquinho melhor — você chegou a comparar os valores mês a mês ou teve algum mês específico que te chamou atenção?"</div>
+            <p data-key="variant_4" contenteditable="false" onclick="enableEdit(this)">Aguarde a resposta. Isso te diz se o problema é de <strong>percepção</strong>, <strong>expectativa</strong> ou algo <strong>técnico real</strong>.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">2. Explicação simples (sem jargão técnico)</span></div>
+          <div class="step-body">
+            <p data-key="variant_5" contenteditable="false" onclick="enableEdit(this)">O desconto não cai sobre o total da conta — ele é aplicado <strong>só na parte da energia que chega da usina</strong>. A conta tem taxas fixas da distribuidora (como iluminação pública, impostos) que nunca mudam. Por isso parece menor do que a pessoa espera.</p>
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Dona [nome], pensa assim: a sua conta tem duas partes — uma que é fixa da distribuidora, como imposto, que a gente não consegue mexer. O desconto entra só na parte da energia mesmo. Por isso não é o valor total que cai, é uma parte. Mas ela já ajuda bastante no final do mês."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">🧾 Para cliente com duas contas</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"A soma dos dois boletos — o da distribuidora e o nosso — é menor do que você pagaria com uma conta só, sem o serviço. Se quiser, eu calculo isso junto com você agora."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🔄</span><span class="step-label">3. Retenção — mostre o valor já gerado</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_2" contenteditable="false" onclick="enableEdit(this)">"Você já tem economia acumulada no período — e a tendência é melhorar conforme o uso de energia se estabiliza. Também consigo verificar aqui se existe uma condição melhor para o seu perfil hoje."</div>
+            <div class="alert"><span class="alert-icon">📊</span><span>Acesse o histórico no sistema e mencione o valor total economizado. Números concretos convencem muito mais do que explicações.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_3" contenteditable="false" onclick="enableEdit(this)">"Faz sentido pra você a gente ajustar isso ao invés de cancelar agora e perder esse benefício que já está rodando?"</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj1')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj1"></div>
+    </div>
+
+    <!-- OBJ 2: Demora -->
+    <div class="objection-card" id="card-obj2">
+      <div class="card-header">
+        <div class="card-emoji">⏳</div>
+        <div class="card-title">
+          <h2>"Ainda não tive desconto / demora muito"</h2>
+          <p data-key="variant_6" contenteditable="false" onclick="enableEdit(this)">Cliente está no período de ativação e ainda não viu o desconto aparecer na conta</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag">Todas as modalidades</span>
+        <span class="tag yellow">Verificar tempo de adesão</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">1. Sondagem</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_4" contenteditable="false" onclick="enableEdit(this)">"Você já está conosco há quanto tempo mais ou menos?"</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">2. Explicação — o processo em linguagem simples</span></div>
+          <div class="step-body">
+            <p data-key="variant_7" contenteditable="false" onclick="enableEdit(this)">O início do desconto pode levar <strong>até 90 dias</strong> porque não depende só da iGreen — a empresa de energia da região precisa analisar, aprovar e incluir o cliente no sistema dela. É uma regra que vale para todo mundo, não é algo que a iGreen controla sozinha.</p>
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], é como se fosse uma fila na prefeitura — a iGreen dá entrada em tudo certo, mas a empresa de energia da sua cidade precisa aprovar e colocar no sistema deles. Isso pode levar até 3 meses. Completamente normal."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">🤨 Para cliente desconfiado</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Entendo sua dúvida — é um prazo que parece longo. Mas é uma exigência regulatória, igual ao prazo de cadastro bancário ou de cartão. Posso confirmar pra você exatamente em que etapa está o seu processo agora."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🔄</span><span class="step-label">3. Retenção — a virada de chave</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_5" contenteditable="false" onclick="enableEdit(this)">"A boa notícia é que, depois que começa, o benefício é contínuo e automático — você não precisa fazer nada. Ou seja, você já passou pela parte mais trabalhosa do processo."</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_6" contenteditable="false" onclick="enableEdit(this)">"Cancelar agora seria sair exatamente antes de começar a aproveitar — deixa eu verificar pra você em que fase está hoje. Pode ser?"</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj2')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj2"></div>
+    </div>
+
+    <!-- OBJ 3: Duas contas -->
+    <div class="objection-card" id="card-obj3">
+      <div class="card-header">
+        <div class="card-emoji">🧾</div>
+        <div class="card-title">
+          <h2>"Não gostei de ter duas contas"</h2>
+          <p data-key="variant_8" contenteditable="false" onclick="enableEdit(this)">Cliente se incomoda com dois boletos — organização, confusão ou medo de pagar errado</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag red">Só para clientes com duas contas</span>
+        <span class="tag yellow">Verificar fornecedora antes de prometer conta única</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">1. Sondagem — descubra o incômodo real</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_7" contenteditable="false" onclick="enableEdit(this)">"Entendi — o que mais te incomoda: é a organização de dois pagamentos, o valor ou a confusão de entender qual é qual?"</div>
+            <p data-key="variant_9" contenteditable="false" onclick="enableEdit(this)">Isso muda completamente a abordagem. Organização → solução prática. Valor → mostrar que a soma é menor. Confusão → explicar claramente.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">2. Explicação</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], deixa eu explicar simples: uma conta é da distribuidora — igual à que você sempre pagou. A outra é a nossa, que traz o desconto. A soma das duas é menor do que você pagaria com uma conta só sem o serviço. Você está pagando menos, só dividido em dois."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">💡 Argumento financeiro</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Mesmo com dois boletos, o total que você paga no mês é menor do que seria sem o serviço. Se você somar os dois agora e comparar com o que pagava antes, a diferença aparece."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🔄</span><span class="step-label">3. Retenção — ofereça conta única (se disponível)</span></div>
+          <div class="step-body">
+            <div class="alert"><span class="alert-icon">⚠️</span><span><strong>Consulte antes de oferecer!</strong> Conta única disponível apenas para: Solatio/PopSol (distribuidora Cemig) | Sunne e Fit Energia (já vêm com conta única) | GV (Energisa Minas Rio, adesões após jun/2025). EDP, BC e Matrix: <strong>não possuem conta única.</strong></span></div>
+            <div class="script" data-key="script_8" contenteditable="false" onclick="enableEdit(this)">"Dependendo da sua fornecedora e região, existe a possibilidade de unificar tudo em um só boleto — você recebe uma conta só, com tudo incluído. Deixa eu verificar se essa opção está disponível pra você agora."</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_9" contenteditable="false" onclick="enableEdit(this)">"Se eu conseguir unificar isso em um boleto só pra você, faria sentido continuar?"</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj3')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj3"></div>
+    </div>
+
+    <!-- OBJ 4: Mudança -->
+    <div class="objection-card" id="card-obj4">
+      <div class="card-header">
+        <div class="card-emoji">🔄</div>
+        <div class="card-title">
+          <h2>"Vou me mudar / não preciso mais"</h2>
+          <p data-key="variant_10" contenteditable="false" onclick="enableEdit(this)">Cliente está de mudança e acha que precisa cancelar o serviço</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag">Todas as modalidades</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">1. Sondagem</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_10" contenteditable="false" onclick="enableEdit(this)">"Você pretende manter o benefício no novo endereço ou ainda não pensou nisso?"</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">2. Explicação</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], muita gente não sabe, mas esse benefício pode ir com você para o novo endereço — como se fosse um plano de telefone que você transfere de um apartamento para outro. A gente verifica se a região nova tem cobertura e faz a transferência."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">📍 Para qualquer perfil</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Em muitos casos dá pra manter o contrato no novo endereço e continuar tendo desconto normalmente — você não precisa perder esse benefício por causa da mudança."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🔄</span><span class="step-label">3. Retenção</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_11" contenteditable="false" onclick="enableEdit(this)">"Posso verificar agora se a nova região tem cobertura e já deixar tudo encaminhado, sem você perder o benefício."</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_12" contenteditable="false" onclick="enableEdit(this)">"Prefere que eu veja essa possibilidade antes de cancelar definitivamente?"</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj4')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj4"></div>
+    </div>
+
+    <!-- OBJ 5: Não está usando -->
+    <div class="objection-card" id="card-obj5">
+      <div class="card-header">
+        <div class="card-emoji">📉</div>
+        <div class="card-title">
+          <h2>"Não estou usando / não vejo vantagem"</h2>
+          <p data-key="variant_11" contenteditable="false" onclick="enableEdit(this)">Cliente sente que o serviço não existe ou não faz diferença</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag">Todas as modalidades</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">1. Sondagem</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_13" contenteditable="false" onclick="enableEdit(this)">"Quando você diz que não está usando — é mais por falta de acompanhamento ou porque não percebeu diferença no valor da conta?"</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">2. Explicação — o serviço é automático</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], esse serviço funciona como um seguro — você não precisa fazer nada. Todo mês a usina manda energia para a distribuidora, que aplica na sua conta automaticamente. Você não precisa ligar nem apertar nenhum botão."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">📲 Para qualquer perfil</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"O serviço funciona de forma automática — mesmo que você não acompanhe, o desconto está sendo aplicado todo mês. Ele não precisa ser 'ativado' por você."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🔄</span><span class="step-label">3. Retenção — mostre o histórico</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_14" contenteditable="false" onclick="enableEdit(this)">"Posso te mostrar agora o histórico de quanto você já economizou desde que começou — mês a mês. Muita gente se surpreende com o valor acumulado."</div>
+            <div class="alert"><span class="alert-icon">📊</span><span>Acesse o sistema e leia o valor total economizado. Números reais são o argumento mais forte aqui.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_15" contenteditable="false" onclick="enableEdit(this)">"Depois de ver esses valores, você decide com mais clareza — pode ser?"</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj5')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj5"></div>
+    </div>
+
+    <!-- OBJ 6: Não entendeu -->
+    <div class="objection-card" id="card-obj6">
+      <div class="card-header">
+        <div class="card-emoji">😕</div>
+        <div class="card-title">
+          <h2>"Não entendi como funciona"</h2>
+          <p data-key="variant_12" contenteditable="false" onclick="enableEdit(this)">Cliente está confuso — muito comum em clientes 50+</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag">Muito comum em 50+</span>
+        <span class="tag yellow">Priorize linguagem visual e analogias</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">1. Sondagem — localize o ponto de confusão</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_16" contenteditable="false" onclick="enableEdit(this)">"Me fala o que ficou mais confuso pra você — é sobre o desconto em si, sobre as contas que você recebe, ou sobre como o processo funciona?"</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">2. Explicação — use analogia simples</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Analogia da fazenda (50+ / idoso)</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], pensa assim: existe uma fazenda solar — uma usina cheia de placas — que gera energia. Essa energia vai pra rede elétrica da cidade e chega até a sua casa. A distribuidora anota isso e desconta da sua conta. A iGreen é quem tem essa usina e compartilha o desconto com você."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">🔋 Versão mais direta</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Uma usina de energia solar gera energia, essa energia entra na rede da distribuidora e é anotada como crédito na sua conta. A iGreen divide esse desconto com você. Você não precisa instalar nada — é tudo automático."</p>
+              </div>
+            </div>
+            <div class="variants" style="margin-top:12px">
+              <div class="variant">
+                <div class="variant-label">🧾 Com duas contas</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"A conta da distribuidora é o que você sempre pagou. O nosso boleto é separado e representa o desconto que você recebe. A soma dos dois é menor do que seria sem o serviço."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">📋 Com conta única</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Você recebe um boleto só com tudo já calculado. A distribuidora está incluída nesse valor — você não precisa pagar nada separado."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🔄</span><span class="step-label">3. Retenção</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_17" contenteditable="false" onclick="enableEdit(this)">"Você não precisa instalar nada nem fazer nada — é um benefício que chega automaticamente na sua conta. O que a gente pode fazer agora é eu te mostrar exatamente onde aparece o desconto na sua fatura."</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_18" contenteditable="false" onclick="enableEdit(this)">"Ficou mais claro agora? Quer que eu te acompanhe passo a passo pra você ver esse desconto na sua conta?"</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj6')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj6"></div>
+    </div>
+
+    <!-- OBJ 7: Está caro -->
+    <div class="objection-card" id="card-obj7">
+      <div class="card-header">
+        <div class="card-emoji">💰</div>
+        <div class="card-title">
+          <h2>"Está caro / não compensa"</h2>
+          <p data-key="variant_13" contenteditable="false" onclick="enableEdit(this)">Cliente sente que o valor pago não justifica o benefício</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag">Todas as modalidades</span>
+        <span class="tag yellow">Pode ser elegível para aumento de desconto</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">1. Sondagem</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_19" contenteditable="false" onclick="enableEdit(this)">"O que você sentiu — aumento no valor da conta ou a sensação de que a economia esperada não apareceu?"</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">2. Explicação</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], o serviço em si não tem mensalidade fixa — o que você paga está diretamente ligado ao quanto de energia você usou com o desconto. Se a conta parece maior, pode ser que seu consumo aumentou — mais aparelhos ligados, mais pessoas em casa, por exemplo."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">📊 Argumento de ajuste</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Às vezes a percepção de 'caro' vem de uma variação de consumo ou de um reajuste da distribuidora que aconteceu ao mesmo tempo. A gente consegue verificar se existe uma condição de desconto maior disponível pra você hoje."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🔄</span><span class="step-label">3. Retenção — ofereça aumento de desconto</span></div>
+          <div class="step-body">
+            <div class="alert"><span class="alert-icon">⚠️</span><span>Consulte as <strong>Regras de Estados – Conexão Green</strong> antes de oferecer aumento. O percentual disponível varia por região e fornecedora.</span></div>
+            <div class="script" data-key="script_20" contenteditable="false" onclick="enableEdit(this)">"Posso verificar agora se você tem direito a um percentual de desconto maior — isso pode resolver exatamente o que você está sentindo."</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_21" contenteditable="false" onclick="enableEdit(this)">"Se a gente conseguir melhorar esse desconto pra você, faria sentido continuar?"</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj7')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj7"></div>
+    </div>
+
+    <!-- OBJ 8: Problema / Insatisfeito -->
+    <div class="objection-card" id="card-obj8">
+      <div class="card-header">
+        <div class="card-emoji">😤</div>
+        <div class="card-title">
+          <h2>"Tive problema / estou insatisfeito"</h2>
+          <p data-key="variant_14" contenteditable="false" onclick="enableEdit(this)">Cliente veio com experiência ruim — precisa ser ouvido antes de qualquer argumento</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag">Todas as modalidades</span>
+        <span class="tag red">Nunca argumente antes de escutar</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">1. Escuta total — não interrompa</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_22" contenteditable="false" onclick="enableEdit(this)">"Me conta exatamente o que aconteceu — quero entender tudo pra te ajudar da melhor forma."</div>
+            <p data-key="variant_15" contenteditable="false" onclick="enableEdit(this)">Deixe o cliente falar completamente. Não interrompa. Anote os pontos. O cliente precisa sentir que foi ouvido antes de aceitar qualquer solução.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🤝</span><span class="step-label">2. Validação emocional</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], entendo totalmente — e você está certo em exigir que funcione direito. Esse benefício foi contratado pra te ajudar, e é exatamente isso que eu vou garantir aqui."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">😤 Para cliente irritado</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Você está completamente certo em estar insatisfeito com isso. Meu papel aqui não é defender o erro — é resolver. Me conta tudo que aconteceu."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🔄</span><span class="step-label">3. Retenção — resolução concreta</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_23" contenteditable="false" onclick="enableEdit(this)">"Esse ponto que você trouxe tem solução — e eu acompanho com você agora pra garantir que seja resolvido da forma certa, não só registrado."</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_24" contenteditable="false" onclick="enableEdit(this)">"Se a gente resolver esse ponto hoje, você se sentiria mais tranquilo em continuar?"</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj8')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj8"></div>
+    </div>
+
+    <!-- OBJ 9: Decidido -->
+    <div class="objection-card" id="card-obj9">
+      <div class="card-header">
+        <div class="card-emoji">🧠</div>
+        <div class="card-title">
+          <h2>Cliente decidido a cancelar — Script Coringa</h2>
+          <p data-key="variant_16" contenteditable="false" onclick="enableEdit(this)">Use quando o cliente já está irredutível. É a última tentativa antes de seguir com o cancelamento.</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag red">Último recurso</span>
+        <span class="tag yellow">Tom: respeito + abertura</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🗣️</span><span class="step-label">Script Coringa</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_25" contenteditable="false" onclick="enableEdit(this)">"Eu entendo sua decisão — e claro, vou seguir com o cancelamento se você quiser. Mas antes disso, posso só te mostrar uma alternativa que pode resolver exatamente o que te incomodou?"</div>
+            <p data-key="variant_17" contenteditable="false" onclick="enableEdit(this)">Se ele permitir → identifique a objeção real e entre com a estratégia correspondente. Se recusar → siga com o cancelamento sem pressão.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">⏳</span><span class="step-label">Lembre sobre o prazo de cancelamento</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], só pra você saber: quando a gente cancela, existe um período até tudo se finalizar, porque a usina já mandou energia pra sua conta que ainda não foi usada. Esse saldo precisa ser consumido antes de encerrar de vez. Você continuará recebendo esse benefício por esse período."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">📋 Versão padrão</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"O cancelamento tem um prazo de finalização porque sua conta tem um saldo de energia já gerado que precisa ser consumido antes do encerramento. Durante esse período o benefício segue ativo."</p>
+              </div>
+            </div>
+            <div class="alert alert-red"><span class="alert-icon">⚠️</span><span>Se o cliente tiver placas solares: o prazo pode ser maior, pois a distribuidora pode priorizar a energia das placas, deixando o saldo da iGreen acumulado.</span></div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj9')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj9"></div>
+    </div>
+
+    <!-- OBJ 10: Placas solares -->
+    <div class="objection-card" id="card-obj10">
+      <div class="card-header">
+        <div class="card-emoji">☀️</div>
+        <div class="card-title">
+          <h2>"Instalei / vou instalar placas solares"</h2>
+          <p data-key="variant_18" contenteditable="false" onclick="enableEdit(this)">Cliente tem ou quer ter energia solar própria e questiona compatibilidade</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag yellow">Atenção ao prazo de cancelamento</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">1. Sondagem</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_26" contenteditable="false" onclick="enableEdit(this)">"Você já instalou as placas ou está pensando em instalar? E elas já estão ativas na sua conta de energia?"</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">2. Explicação — as placas não eliminam o serviço</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], ter placas solares em casa não cancela o nosso serviço automaticamente. Os dois trabalham juntos — a usina da iGreen manda energia pela rede, e as suas placas mandam a energia gerada em casa. A distribuidora usa as duas pra reduzir sua conta."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">⚙️ Detalhe técnico importante</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"O que pode acontecer é a distribuidora priorizar a energia das suas placas primeiro. Nesse caso, o saldo que a iGreen mandou fica acumulado — e só vai sendo usado aos poucos. Isso pode aumentar o prazo de finalização, caso você queira cancelar."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🔄</span><span class="step-label">3. Retenção</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_27" contenteditable="false" onclick="enableEdit(this)">"Se as placas cobrem todo o seu consumo, aí faz sentido avaliar. Mas se ainda tiver consumo excedente — que é muito comum — o nosso serviço continua complementando e trazendo desconto nessa parte. Posso verificar com você como está sua situação atual?"</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_28" contenteditable="false" onclick="enableEdit(this)">"Quer que eu veja se existe complemento pra você antes de decidir cancelar?"</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj10')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj10"></div>
+    </div>
+
+    <!-- OBJ 11: Familiar ligando -->
+    <div class="objection-card" id="card-obj11">
+      <div class="card-header">
+        <div class="card-emoji">👨‍👩‍👧</div>
+        <div class="card-title">
+          <h2>Familiar ligando pelo cliente idoso</h2>
+          <p data-key="variant_19" contenteditable="false" onclick="enableEdit(this)">Filho, neto ou cônjuge ligando para cancelar em nome do titular</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag">Muito comum em clientes 50+</span>
+        <span class="tag yellow">Verificar validação de identidade</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">✅</span><span class="step-label">1. Validação — confirme que é do número cadastrado</span></div>
+          <div class="step-body">
+            <p data-key="variant_20" contenteditable="false" onclick="enableEdit(this)">Se a ligação vier do <strong>número cadastrado</strong>, o atendimento pode prosseguir normalmente mesmo sendo um familiar. Se vier de outro número, é necessário validação adicional (WhatsApp do número cadastrado, documento com foto, ou ligação pelo número cadastrado).</p>
+            <div class="alert"><span class="alert-icon">📌</span><span>Não é obrigatório que seja o titular. Familiar ligando pelo número cadastrado = atendimento liberado.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎧</span><span class="step-label">2. Sondagem com o familiar</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_29" contenteditable="false" onclick="enableEdit(this)">"Entendi — qual foi a principal dificuldade que o [nome do titular] está tendo? Desconto, entendimento da conta, ou algo específico que aconteceu?"</div>
+            <p data-key="variant_21" contenteditable="false" onclick="enableEdit(this)">O familiar geralmente tem mais clareza sobre o problema. Use isso a seu favor.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">3. Argumento — o benefício é do titular</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">🗣️ Para o familiar</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Esse serviço não tem custo de adesão e só traz economia — cancelar agora faria [nome] perder um benefício que já está ativo. Se o problema é de entendimento ou organização das contas, a gente consegue resolver isso juntos agora."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">🧾 Se for o modelo de duas contas</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Se a dificuldade é administrar dois boletos, dependendo da região, existe a possibilidade de unificar tudo em um só. Isso já resolve o problema sem precisar cancelar."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🎯</span><span class="step-label">4. Fechamento</span></div>
+          <div class="step-body">
+            <div class="script" data-key="script_30" contenteditable="false" onclick="enableEdit(this)">"Se a gente resolver essa questão agora, você acha que [nome do titular] ficaria bem com isso? Posso te ajudar a entender tudo direitinho pra você explicar pra ele/ela também."</div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj11')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj11"></div>
+    </div>
+
+    <!-- OBJ 12: Conta única -->
+    <div class="objection-card" id="card-obj12">
+      <div class="card-header">
+        <div class="card-emoji">📋</div>
+        <div class="card-title">
+          <h2>Migração para Conta Única</h2>
+          <p data-key="variant_22" contenteditable="false" onclick="enableEdit(this)">Cliente quer unificar os boletos — processo e regras por fornecedora</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag red">Verificar disponibilidade por fornecedora</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">📋</span><span class="step-label">Regras de disponibilidade</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">✅ Pode migrar para conta única</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)"><strong>Solatio / PopSol</strong> — apenas clientes da distribuidora <strong>Cemig</strong>.<br><br><strong>GV</strong> — apenas distribuidora <strong>Energisa Minas Rio</strong>, adesões após junho de 2025.</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">⚠️ Já vêm com conta única</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)"><strong>Sunne</strong> e <strong>Fit Energia</strong> — já têm conta única desde a adesão. Não é possível ofertar como retenção pois já é o modelo padrão.</p>
+              </div>
+            </div>
+            <div class="alert alert-red" style="margin-top:12px"><span class="alert-icon">🚫</span><span><strong>Não possuem conta única em nenhuma situação:</strong> EDP, BC e Matrix. Não ofereça essa opção para esses clientes.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🗣️</span><span class="step-label">Como explicar para o cliente</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], o que vou fazer é unificar tudo em um boleto só — a parte da distribuidora e a nossa parte entram juntas. Você continua pagando menos do que antes, mas agora em um envelope só."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">📋 Versão padrão</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Com a conta única, você passa a receber um boleto consolidado com tudo incluído. A distribuidora está dentro desse valor — você não precisa pagar nada separado."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">⚙️</span><span class="step-label">Processo após retenção</span></div>
+          <div class="step-body">
+            <p data-key="variant_23" contenteditable="false" onclick="enableEdit(this)">1. Ajustar no sistema <strong>Backoffice</strong> e registrar o atendimento.</p>
+            <p data-key="variant_24" contenteditable="false" onclick="enableEdit(this)">2. Registrar na <strong>planilha de controle</strong> da equipe.</p>
+            <p data-key="variant_25" contenteditable="false" onclick="enableEdit(this)">3. Acessar o sistema da fornecedora (PopSol): <strong>cliente.popsolenergia.com.br</strong> → Instalações → localizar cliente por CPF → editar → "+" → preencher campos → Observações: migração-conta única → Salvar.</p>
+            <p data-key="variant_26" contenteditable="false" onclick="enableEdit(this)">4. Enviar mensagem de formalização ao cliente pelo <strong>WhatsApp ou e-mail</strong>.</p>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj12')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj12"></div>
+    </div>
+
+    <!-- OBJ 13: Aumento desconto -->
+    <div class="objection-card" id="card-obj13">
+      <div class="card-header">
+        <div class="card-emoji">📈</div>
+        <div class="card-title">
+          <h2>Aumento de Desconto</h2>
+          <p data-key="variant_27" contenteditable="false" onclick="enableEdit(this)">Oferta de percentual maior como retenção — regras e processo</p>
+        </div>
+      </div>
+      <div class="tags">
+        <span class="tag yellow">Consultar regras por estado antes de oferecer</span>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">⚠️</span><span class="step-label">Antes de qualquer oferta</span></div>
+          <div class="step-body">
+            <div class="alert"><span class="alert-icon">📌</span><span>Consulte obrigatoriamente o material <strong>Regras de Estados – Conexão Green</strong> em: igreenenergy.com.br/regras-dos-estados-conexao-green para verificar se o aumento está disponível na região do cliente e qual percentual pode ser aplicado.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">🗣️</span><span class="step-label">Como oferecer ao cliente</span></div>
+          <div class="step-body">
+            <div class="variants">
+              <div class="variant">
+                <div class="variant-label">👵 Para cliente 50+ / idoso</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"[Nome], tenho uma boa notícia: consigo verificar aqui se é possível aumentar o seu percentual de desconto. Isso significa que mais da sua conta vai cair — você vai economizar ainda mais todo mês."</p>
+              </div>
+              <div class="variant">
+                <div class="variant-label">💰 Para cliente insatisfeito com valor</div>
+                <p data-key="variant_0" contenteditable="false" onclick="enableEdit(this)">"Posso verificar agora se você tem direito a um desconto maior — dependendo da sua região, é possível ajustar isso hoje mesmo, sem nenhuma burocracia."</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-header"><span class="step-icon">⚙️</span><span class="step-label">Processo após retenção</span></div>
+          <div class="step-body">
+            <p data-key="variant_28" contenteditable="false" onclick="enableEdit(this)">1. Ajustar o desconto no sistema <strong>Backoffice</strong>.</p>
+            <p data-key="variant_29" contenteditable="false" onclick="enableEdit(this)">2. Registrar o atendimento na aba de atendimento do Backoffice.</p>
+            <p data-key="variant_30" contenteditable="false" onclick="enableEdit(this)">3. Registrar na <strong>planilha de controle</strong> da equipe.</p>
+            <p data-key="variant_31" contenteditable="false" onclick="enableEdit(this)">4. Enviar mensagem de formalização ao cliente pelo <strong>WhatsApp ou e-mail</strong>.</p>
+            <div class="alert" style="margin-top:10px"><span class="alert-icon">📝</span><span>Modelo de registro: RETIDO | Solicitante: [Nome] | Método: ligação/chat | Motivo: Insatisfeito com desconto | Método: Realizei aumento de desconto para X% | Protocolo: [número]</span></div>
+          </div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('obj13')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-obj13"></div>
+    </div>
+
+    <!-- PERFIS -->
+    <div class="objection-card" id="card-perfis">
+      <div class="card-header">
+        <div class="card-emoji">🎭</div>
+        <div class="card-title">
+          <h2>Perfis de Cliente</h2>
+          <p data-key="variant_32" contenteditable="false" onclick="enableEdit(this)">Identifique o perfil em até 10 segundos e adapte o tom</p>
+        </div>
+      </div>
+
+      <div class="alert" style="margin-bottom:20px"><span class="alert-icon">⚡</span><span><strong>Fala muito</strong> → emocional/inseguro · <strong>Fala pouco</strong> → apressado/indiferente · <strong>Questiona tudo</strong> → analítico/desconfiado · <strong>Tom alto</strong> → irritado · <strong>Tom calmo + dúvida</strong> → idoso/inseguro</span></div>
+      <div class="profile-grid">
+        <div class="profile-card">
+          <div class="profile-card-header"><span class="profile-card-emoji">👵</span><h3>Idoso / 50+</h3></div>
+          <div class="behaviors"><span class="behavior">Fala mais devagar</span><span class="behavior">Dificuldade com termos técnicos</span><span class="behavior">Precisa de segurança e paciência</span><span class="behavior">Pode ter familiar intermediando</span></div>
+          <div class="rule">"Idoso não quer rapidez — quer segurança."</div>
+        </div>
+        <div class="profile-card">
+          <div class="profile-card-header"><span class="profile-card-emoji">🤨</span><h3>Desconfiado</h3></div>
+          <div class="behaviors"><span class="behavior">Questiona tudo</span><span class="behavior">Já teve experiência ruim antes</span><span class="behavior">Medo de estar sendo enganado</span></div>
+          <div class="rule">"Desconfiado não precisa de convencimento — precisa de prova."</div>
+        </div>
+        <div class="profile-card">
+          <div class="profile-card-header"><span class="profile-card-emoji">⏱️</span><h3>Apressado</h3></div>
+          <div class="behaviors"><span class="behavior">Quer resolver rápido</span><span class="behavior">Interrompe o atendente</span><span class="behavior">Diz "já quero cancelar logo"</span></div>
+          <div class="rule">"Apressado respeita quem é direto."</div>
+        </div>
+        <div class="profile-card">
+          <div class="profile-card-header"><span class="profile-card-emoji">😤</span><h3>Irritado</h3></div>
+          <div class="behaviors"><span class="behavior">Tom alto, impaciente</span><span class="behavior">Já vem com decisão tomada</span><span class="behavior">Quer ser ouvido primeiro</span></div>
+          <div class="rule">"Irritado precisa ser ouvido antes de ser atendido."</div>
+        </div>
+        <div class="profile-card">
+          <div class="profile-card-header"><span class="profile-card-emoji">🧠</span><h3>Analítico</h3></div>
+          <div class="behaviors"><span class="behavior">Quer números exatos</span><span class="behavior">Gosta de lógica e dados</span><span class="behavior">Pergunta "quanto exatamente?"</span></div>
+          <div class="rule">"Analítico decide com números, não com emoção."</div>
+        </div>
+        <div class="profile-card">
+          <div class="profile-card-header"><span class="profile-card-emoji">🤝</span><h3>Inseguro</h3></div>
+          <div class="behaviors"><span class="behavior">Não sabe o que fazer</span><span class="behavior">Oscila na decisão</span><span class="behavior">Precisa de validação</span></div>
+          <div class="rule">"Inseguro precisa de apoio, não de pressão."</div>
+        </div>
+        <div class="profile-card">
+          <div class="profile-card-header"><span class="profile-card-emoji">😎</span><h3>Indiferente</h3></div>
+          <div class="behaviors"><span class="behavior">Respostas curtas</span><span class="behavior">Pouco envolvimento</span><span class="behavior">Parece que "tanto faz"</span></div>
+          <div class="rule">"Indiferente precisa de impacto rápido e direto."</div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('perfis')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-perfis"></div>
+    </div>
+
+    <!-- FRASES IMPACTO -->
+    <div class="objection-card" id="card-impacto">
+      <div class="card-header">
+        <div class="card-emoji">🔥</div>
+        <div class="card-title">
+          <h2>Frases de Alto Impacto</h2>
+          <p data-key="variant_33" contenteditable="false" onclick="enableEdit(this)">Use durante o atendimento — no momento certo, uma frase muda tudo</p>
+        </div>
+      </div>
+      <div class="impact-box">
+        <h4>Para usar em qualquer momento</h4>
+        <div class="impact-list">
+          <div class="impact-item">"O cancelamento resolve rápido, mas pode fazer você perder um benefício que já está em andamento."</div>
+          <div class="impact-item">"Você não está errado — só não tinha todas as informações ainda."</div>
+          <div class="impact-item">"Meu papel aqui não é te impedir de cancelar, é te ajudar a decidir com clareza."</div>
+          <div class="impact-item">"Se eu estivesse no seu lugar, eu também teria essa dúvida."</div>
+          <div class="impact-item">"Vamos ajustar ao invés de desistir — geralmente é mais vantajoso."</div>
+        </div>
+      </div>
+
+      <div class="impact-box">
+        <h4>Específico para clientes 50+ / idosos</h4>
+        <div class="impact-list">
+          <div class="impact-item">"Pode ficar tranquilo(a) — eu vou explicar de forma bem simples, tá? Qualquer dúvida pode me interromper."</div>
+          <div class="impact-item">"Esse benefício foi feito justamente pra ajudar quem paga conta de energia todo mês — não tem nenhum custo extra pra você."</div>
+          <div class="impact-item">"Você não precisa fazer nada diferente do que já faz — continua pagando sua conta normalmente, só que menos."</div>
+          <div class="impact-item">"Muita gente da sua situação ficou com dúvida no começo — é completamente normal."</div>
+        </div>
+      </div>
+
+      <div class="impact-box">
+        <h4>Para clientes com duas contas</h4>
+        <div class="impact-list">
+          <div class="impact-item">"Dois boletos parece mais, mas a soma é menor — esse é o ponto que a maioria não percebe de início."</div>
+          <div class="impact-item">"A segunda conta não é um custo novo — é uma reorganização do que você já pagava, com desconto."</div>
+        </div>
+      </div>
+
+      <div class="impact-box">
+        <h4>Para clientes com troca de titularidade</h4>
+        <div class="impact-list">
+          <div class="impact-item">"Com a troca de titularidade, você tem controle total da conta — sem saldo acumulado, sem surpresa no final do mês."</div>
+          <div class="impact-item">"Essa modalidade foi feita pra quem quer organização e clareza — exatamente o que você está buscando."</div>
+        </div>
+      </div>
+    
+      <button class="add-block-btn" onclick="addBlock('impacto')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-impacto"></div>
+    </div>
+
+    <!-- SEQUÊNCIA -->
+    <div class="objection-card" id="card-sequencia">
+      <div class="card-header">
+        <div class="card-emoji">🚀</div>
+        <div class="card-title">
+          <h2>Sequência Campeã de Retenção</h2>
+          <p data-key="variant_34" contenteditable="false" onclick="enableEdit(this)">O que mais converte não é o script — é a sequência certa</p>
+        </div>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">1️⃣</span><span class="step-label">Escuta — deixe o cliente falar</span></div>
+          <div class="step-body"><p data-key="variant_35" contenteditable="false" onclick="enableEdit(this)">Não interrompa. Não se defenda. Não explique ainda. Apenas ouça. O cliente precisa sentir que foi escutado antes de aceitar qualquer argumento.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-header"><span class="step-icon">2️⃣</span><span class="step-label">Diagnóstico — identifique a causa raiz</span></div>
+          <div class="step-body"><p data-key="variant_36" contenteditable="false" onclick="enableEdit(this)">Faça a pergunta de sondagem. Descubra se é percepção, falta de informação, problema técnico real ou decisão emocional. A abordagem muda completamente conforme a causa.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-header"><span class="step-icon">3️⃣</span><span class="step-label">Explicação simples — sem jargão</span></div>
+          <div class="step-body"><p data-key="variant_37" contenteditable="false" onclick="enableEdit(this)">Use analogias do cotidiano. Evite termos técnicos. Especialmente com clientes 50+: linguagem simples, pausas, confirmação de entendimento.</p>
+          <div class="alert"><span class="alert-icon">🚫</span><span>Evite: "injeção de energia", "compensação", "unidade consumidora", "rateio". Use: "desconto na conta", "economia", "energia que chega da usina", "divisão entre clientes".</span></div></div>
+        </div>
+        <div class="step">
+          <div class="step-header"><span class="step-icon">4️⃣</span><span class="step-label">Solução concreta — ofereça algo real</span></div>
+          <div class="step-body"><p data-key="variant_38" contenteditable="false" onclick="enableEdit(this)">Aumento de desconto, migração para conta única, verificação de histórico, transferência de endereço. Toda retenção precisa de uma solução concreta, não só de argumentos.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-header"><span class="step-icon">5️⃣</span><span class="step-label">Confirmação — feche com uma pergunta</span></div>
+          <div class="step-body"><p data-key="variant_39" contenteditable="false" onclick="enableEdit(this)">Sempre feche com uma pergunta que dá ao cliente a sensação de escolha. Nunca afirme — pergunte. "Faz sentido?" "Pode ser?" "Prefere que eu verifique antes de cancelar?"</p></div>
+        </div>
+      
+      <button class="add-block-btn" onclick="addBlock('sequencia')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-sequencia"></div>
+    </div>
+
+      <div class="alert alert-red" style="margin-top:4px">
+        <span class="alert-icon">❌</span>
+        <span><strong>Se pular a sondagem, a retenção cai muito.</strong> A sondagem não é opcional — ela é o que diferencia uma retenção de uma conversa perdida.</span>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── STORAGE ──────────────────────────────────────────────────
+const SK = 'igreen_edits_v3';
+const CK = 'igreen_custom_objs_v3';
+const BK = 'igreen_blocks_v3';
+
+function load(key) { try { return JSON.parse(localStorage.getItem(key)||'{}'); } catch { return {}; } }
+function loadArr(key) { try { return JSON.parse(localStorage.getItem(key)||'[]'); } catch { return []; } }
+function save(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function showCard(id) {
+  document.querySelectorAll('.objection-card').forEach(c => c.classList.remove('visible'));
+  document.querySelectorAll('.nav-item, .custom-obj-item').forEach(n => n.classList.remove('active'));
+  const card = document.getElementById('card-' + id);
+  if (card) card.classList.add('visible');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+  });
+  document.querySelectorAll('.custom-obj-item').forEach(n => {
+    if (n.getAttribute('data-id') === id) n.classList.add('active');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function filterNav(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('#navList .nav-item').forEach(item => {
+    const label = (item.querySelector('.label')?.textContent || '').toLowerCase();
+    const tags = (item.getAttribute('data-tags') || '').toLowerCase();
+    item.style.display = (!q || label.includes(q) || tags.includes(q)) ? '' : 'none';
+  });
+}
+function filterProfile(profile, el) {
+  document.querySelectorAll('.ptag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── INLINE EDITING ────────────────────────────────────────────
+function enableEdit(el) {
+  if (el.contentEditable === 'true') return;
+  el.contentEditable = 'true';
+  el.classList.add('editing');
+  el.focus();
+  // move cursor to end
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function disableEdit(el) {
+  el.contentEditable = 'false';
+  el.classList.remove('editing');
+  const key = el.getAttribute('data-key');
+  if (key) {
+    const edits = load(SK);
+    edits[key] = el.innerHTML;
+    save(SK, edits);
+  }
+}
+
+// Apply saved edits on load
+function applyEdits() {
+  const edits = load(SK);
+  Object.entries(edits).forEach(([key, html]) => {
+    const el = document.querySelector(`[data-key="${key}"]`);
+    if (el) el.innerHTML = html;
+  });
+}
+
+// Global blur listener for any contenteditable
+document.addEventListener('focusout', e => {
+  if (e.target && e.target.contentEditable === 'true') {
+    disableEdit(e.target);
+  }
+});
+
+// Prevent Enter from creating new lines in scripts (use Shift+Enter)
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && e.target.contentEditable === 'true') {
+    e.preventDefault();
+    e.target.blur();
+  }
+});
+
+// ── ADD CUSTOM BLOCKS ─────────────────────────────────────────
+function addBlock(cardId) {
+  const blocks = load(BK);
+  if (!blocks[cardId]) blocks[cardId] = [];
+  const idx = blocks[cardId].length;
+  blocks[cardId].push({ label: '', text: '', type: 'script' });
+  save(BK, blocks);
+  renderBlocks(cardId);
+  // focus new textarea
+  setTimeout(() => {
+    const container = document.getElementById('blocks-' + cardId);
+    if (container) {
+      const areas = container.querySelectorAll('textarea');
+      if (areas.length) areas[areas.length-1].focus();
+    }
+  }, 60);
+}
+
+function updateBlock(cardId, idx, field, value) {
+  const blocks = load(BK);
+  if (!blocks[cardId] || !blocks[cardId][idx]) return;
+  blocks[cardId][idx][field] = value;
+  save(BK, blocks);
+}
+
+function deleteBlock(cardId, idx) {
+  const blocks = load(BK);
+  if (!blocks[cardId]) return;
+  blocks[cardId].splice(idx, 1);
+  save(BK, blocks);
+  renderBlocks(cardId);
+}
+
+function renderBlocks(cardId) {
+  const container = document.getElementById('blocks-' + cardId);
+  if (!container) return;
+  const blocks = load(BK);
+  const cardBlocks = blocks[cardId] || [];
+  if (cardBlocks.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = cardBlocks.map((b, i) => `
+    <div class="custom-block">
+      <div class="cb-header">
+        <select class="cb-type-sel" onchange="updateBlock('${cardId}',${i},'type',this.value)">
+          <option value="script" ${b.type==='script'?'selected':''}>💬 Script</option>
+          <option value="variant" ${b.type==='variant'?'selected':''}>🔀 Variante</option>
+          <option value="tip" ${b.type==='tip'?'selected':''}>💡 Dica</option>
+          <option value="alert" ${b.type==='alert'?'selected':''}>⚠️ Atenção</option>
+        </select>
+        <input class="cb-label-input" type="text" placeholder="Título (ex: Para cliente idoso)..."
+          value="${escH(b.label||'')}" oninput="updateBlock('${cardId}',${i},'label',this.value)">
+        <button class="cb-del" onclick="deleteBlock('${cardId}',${i})" title="Excluir">✕</button>
+      </div>
+      <textarea class="cb-textarea" placeholder="Escreva aqui o script ou argumentação..."
+        oninput="updateBlock('${cardId}',${i},'text',this.value)">${escH(b.text||'')}</textarea>
+    </div>
+  `).join('');
+}
+
+function renderAllBlocks() {
+  const blocks = load(BK);
+  Object.keys(blocks).forEach(cardId => renderBlocks(cardId));
+}
+
+function escH(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── CUSTOM OBJECTIONS (sidebar) ───────────────────────────────
+function loadCustomObjs() { return loadArr(CK); }
+function saveCustomObjs(d) { save(CK, d); }
+
+function renderCustomObjList() {
+  const objs = loadCustomObjs();
+  const list = document.getElementById('customObjList');
+  if (!list) return;
+  list.innerHTML = objs.map((obj, i) => `
+    <div class="custom-obj-item" data-id="custom-${i}" onclick="showCard('custom-${i}')">
+      <span class="c-icon">${obj.emoji||'📌'}</span>
+      <span class="c-label">${escH(obj.title)}</span>
+      <button class="del-obj" onclick="event.stopPropagation();deleteCustomObj(${i})" title="Excluir">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderCustomCards() {
+  const objs = loadCustomObjs();
+  document.querySelectorAll('.custom-obj-card').forEach(el => el.remove());
+  const main = document.querySelector('main.content');
+  objs.forEach((obj, i) => {
+    const div = document.createElement('div');
+    div.className = 'objection-card custom-obj-card';
+    div.id = 'card-custom-' + i;
+    div.innerHTML = `
+      <div class="card-header">
+        <div class="card-emoji">${obj.emoji||'📌'}</div>
+        <div class="card-title">
+          <h2>${escH(obj.title)}</h2>
+          <p>${escH(obj.subtitle||'Objeção personalizada')}</p>
+        </div>
+      </div>
+      <p class="edit-hint">✏️ Clique em qualquer texto para editar · Enter para salvar · Shift+Enter para nova linha</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-header"><span class="step-icon">💬</span><span class="step-label">Argumentação principal</span></div>
+          <div class="step-body">
+            <div class="script" data-key="cobj_${i}_script" contenteditable="false" onclick="enableEdit(this)">${escH(obj.script||'Clique para editar...')}</div>
+            ${obj.notes ? `<p data-key="cobj_${i}_notes" contenteditable="false" onclick="enableEdit(this)" style="margin-top:10px">${escH(obj.notes)}</p>` : ''}
+          </div>
+        </div>
+      </div>
+      <button class="add-block-btn" onclick="addBlock('custom-${i}')">＋ Adicionar argumentação</button>
+      <div class="custom-blocks" id="blocks-custom-${i}"></div>
+    `;
+    main.appendChild(div);
+  });
+  renderAllBlocks();
+}
+
+function deleteCustomObj(index) {
+  if (!confirm('Excluir esta objeção?')) return;
+  const objs = loadCustomObjs();
+  objs.splice(index, 1);
+  saveCustomObjs(objs);
+  renderCustomObjList();
+  renderCustomCards();
+  showCard('home');
+}
+
+function openNewObjForm() {
+  showCard('new-obj-form');
+}
+
+function buildNewObjFormCard() {
+  const main = document.querySelector('main.content');
+  const existing = document.getElementById('card-new-obj-form');
+  if (existing) return;
+  const div = document.createElement('div');
+  div.className = 'objection-card';
+  div.id = 'card-new-obj-form';
+  div.innerHTML = `
+    <div class="card-header">
+      <div class="card-emoji">➕</div>
+      <div class="card-title"><h2>Nova Objeção</h2><p>Crie sua própria objeção com argumentação personalizada</p></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;max-width:600px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <input id="nof-emoji" class="form-inp" style="max-width:80px" type="text" placeholder="📌" maxlength="2">
+        <input id="nof-title" class="form-inp" style="flex:1" type="text" placeholder="Título da objeção...">
+      </div>
+      <input id="nof-subtitle" class="form-inp" type="text" placeholder="Descrição curta (opcional)">
+      <textarea id="nof-script" class="form-ta" placeholder="Script principal — o que dizer ao cliente..."></textarea>
+      <textarea id="nof-notes" class="form-ta" placeholder="Observações internas (opcional)..."></textarea>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-save-obj" onclick="saveNewObj()">Salvar objeção</button>
+        <button class="btn-cancel-obj" onclick="showCard('home')">Cancelar</button>
+      </div>
+    </div>
+  `;
+  main.appendChild(div);
+}
+
+function saveNewObj() {
+  const emoji = document.getElementById('nof-emoji').value.trim() || '📌';
+  const title = document.getElementById('nof-title').value.trim();
+  const subtitle = document.getElementById('nof-subtitle').value.trim();
+  const script = document.getElementById('nof-script').value.trim();
+  const notes = document.getElementById('nof-notes').value.trim();
+  if (!title) { alert('Digite um título para a objeção.'); return; }
+  const objs = loadCustomObjs();
+  objs.push({ emoji, title, subtitle, script, notes });
+  saveCustomObjs(objs);
+  ['nof-emoji','nof-title','nof-subtitle','nof-script','nof-notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  renderCustomObjList();
+  renderCustomCards();
+  showCard('custom-' + (objs.length - 1));
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+buildNewObjFormCard();
+renderCustomObjList();
+renderCustomCards();
+applyEdits();
+renderAllBlocks();
+showCard('home');
+</script>
+</body>
+</html>

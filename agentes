@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Agentes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:      #000000;
+    --surface: #050f08;
+    --surface2:#0a0a0a;
+    --border:  #1a3322;
+    --accent:  #22c55e;
+    --text:    #ffffff;
+    --muted:   #4ade80;
+    --good:    #22c55e;
+    --mid:     #a3e635;
+    --bad:     #f87171;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+  }
+
+  header {
+    background: #000;
+    border-bottom: 1px solid #1a3322;
+    padding: 16px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .logo-area { display: flex; align-items: center; gap: 12px; }
+  .logo-dot {
+    width: 9px; height: 9px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px #22c55e99;
+    flex-shrink: 0;
+  }
+  .header-left h1 { font-size: 1.05rem; font-weight: 700; color: #fff; letter-spacing: -0.2px; }
+  .header-left h1 span { color: var(--accent); }
+  .header-left p { font-size: 0.68rem; color: var(--muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; opacity: 0.6; }
+
+  .upload-zone {
+    border: 1px solid #1a3322;
+    border-radius: 7px;
+    padding: 8px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.77rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: #050f08;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .upload-zone:hover { border-color: var(--accent); background: #0a1f10; }
+  #fileInput { display: none; }
+
+  .filter-toggle {
+    display: flex; align-items: center; gap: 8px;
+    background: #050f08; border: 1px solid #1a3322; border-radius: 7px;
+    padding: 7px 14px; cursor: pointer; user-select: none;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .filter-toggle:hover, .filter-toggle.active { border-color: var(--accent); background: #0a1f10; }
+  .filter-toggle span { font-size: 0.77rem; font-weight: 600; color: #86efac; transition: color 0.12s; }
+  .filter-toggle.active span { color: var(--accent); }
+  .toggle-switch {
+    width: 32px; height: 18px; background: #1a3322; border-radius: 99px;
+    position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .filter-toggle.active .toggle-switch { background: var(--accent); }
+  .toggle-switch::after {
+    content: ''; position: absolute; width: 12px; height: 12px;
+    background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s;
+  }
+  .filter-toggle.active .toggle-switch::after { transform: translateX(14px); }
+
+  .main { padding: 24px 36px; max-width: 1600px; margin: 0 auto; }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+  }
+  .card-label { font-size: 0.63rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 7px; opacity: 0.65; }
+  .card-value { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; color: #fff; font-variant-numeric: tabular-nums; }
+  .card-value.cg { color: var(--accent); }
+  .card-value.cl { color: var(--mid); }
+
+  .controls { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; flex-wrap: wrap; }
+  .ctl { font-size: 0.68rem; font-weight: 600; color: var(--muted); opacity: 0.55; margin-right: 4px; }
+  .sort-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: #86efac;
+    padding: 5px 13px;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .sort-btn.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #000; }
+  th {
+    padding: 11px 20px;
+    text-align: left;
+    font-size: 0.67rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.1s;
+  }
+  th:hover { color: var(--accent); }
+  th .si { opacity: 0.3; margin-left: 3px; font-size: 0.6rem; }
+  th.sorted { color: var(--accent); }
+  th.sorted .si { opacity: 1; }
+
+  tbody tr { border-bottom: 1px solid #0d1f13; transition: background 0.08s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #0a1a0f; }
+
+  td { padding: 14px 20px; font-size: 0.875rem; vertical-align: middle; color: #fff; }
+
+  .agent-name { font-size: 0.88rem; font-weight: 600; color: #fff; white-space: nowrap; }
+  .agent-id { font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; color: var(--muted); display: block; margin-top: 2px; opacity: 0.5; }
+
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 500; color: #d1fae5; font-variant-numeric: tabular-nums; }
+
+  .bar-cell { min-width: 160px; }
+  .bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .bar-track { flex: 1; height: 4px; background: #0f2218; border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.35s ease; }
+  .bar-label { font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 600; white-space: nowrap; min-width: 42px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .pill { display: inline-block; padding: 4px 11px; border-radius: 5px; font-size: 0.77rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+  .pill-good { background: #052e16; color: #4ade80; border: 1px solid #14532d; }
+  .pill-mid  { background: #1a2e10; color: #bef264; border: 1px solid #365314; }
+  .pill-bad  { background: #2d0a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+
+  .empty { text-align: center; padding: 56px 20px; color: var(--muted); opacity: 0.3; }
+  .empty svg { margin-bottom: 10px; }
+  .empty p { font-size: 0.83rem; font-weight: 500; }
+
+  body.dragover .upload-zone { border-color: var(--accent); background: #0a1f10; }
+
+  @media (max-width: 700px) {
+    .main { padding: 14px; }
+    header { padding: 12px 16px; }
+    th, td { padding: 10px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-area">
+    <div class="logo-dot"></div>
+    <div class="header-left">
+      <h1>Dashboard <span>Agentes</span></h1>
+      <p id="fileLabel">Nenhum arquivo carregado</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div class="filter-toggle" id="filterToggle" onclick="toggleFilter()">
+      <div class="toggle-switch"></div>
+      <span>Ignorar &lt; 1 min</span>
+    </div>
+    <label class="upload-zone" for="fileInput">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      Importar CSV
+    </label>
+  </div>
+  <input type="file" id="fileInput" accept=".csv">
+</header>
+
+<div class="main">
+  <div class="summary" id="summary" style="display:none">
+    <div class="card"><div class="card-label">Agentes</div><div class="card-value cg" id="s-agents">—</div></div>
+    <div class="card"><div class="card-label">Total Atend.</div><div class="card-value" id="s-total">—</div></div>
+    <div class="card"><div class="card-label">TME Médio</div><div class="card-value cl" id="s-tme">—</div></div>
+    <div class="card"><div class="card-label">TMA Médio</div><div class="card-value cl" id="s-tma">—</div></div>
+    <div class="card"><div class="card-label">Taxa Aval. Média</div><div class="card-value cg" id="s-taxa">—</div></div>
+    <div class="card"><div class="card-label">CSAT Médio</div><div class="card-value cg" id="s-csat">—</div></div>
+  </div>
+
+  <div class="controls" id="controls" style="display:none">
+    <span class="ctl">Ordenar por:</span>
+    <button class="sort-btn" onclick="sortBy('nome')">Nome</button>
+    <button class="sort-btn" onclick="sortBy('tme_sec')">TME</button>
+    <button class="sort-btn" onclick="sortBy('tma_sec')">TMA</button>
+    <button class="sort-btn" onclick="sortBy('taxa_avaliacao')">Taxa Aval.</button>
+    <button class="sort-btn active" onclick="sortBy('csat')">CSAT</button>
+    <button class="sort-btn" onclick="sortBy('total')">Atend.</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('nome')">Agente <span class="si">↕</span></th>
+          <th onclick="sortBy('total')">Atend. <span class="si">↕</span></th>
+          <th onclick="sortBy('tme_sec')">TME <span class="si">↕</span></th>
+          <th onclick="sortBy('tma_sec')">TMA <span class="si">↕</span></th>
+          <th onclick="sortBy('taxa_avaliacao')">Taxa Avaliação <span class="si">↕</span></th>
+          <th onclick="sortBy('csat')">CSAT <span class="si">↕</span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="6"><div class="empty">
+          <svg width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p>Importe um arquivo CSV para visualizar os dados</p>
+        </div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let allAgents = [], sortField = 'csat', sortDir = -1, filterActive = false, rawRows = [], colAtend = null;
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const sep = lines[0].includes(';') ? ';' : ',';
+  const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g,''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitLine(lines[i], sep);
+    if (cols.length < 2) continue;
+    const row = {};
+    headers.forEach((h,idx) => row[h] = (cols[idx]||'').trim().replace(/^"|"$/g,''));
+    rows.push(row);
+  }
+  return rows;
+}
+function splitLine(line, sep) {
+  const res = []; let cur = '', inQ = false;
+  for (let c of line) {
+    if (c==='"') inQ=!inQ;
+    else if (c===sep&&!inQ) { res.push(cur); cur=''; }
+    else cur+=c;
+  }
+  res.push(cur); return res;
+}
+function toggleFilter() {
+  filterActive = !filterActive;
+  const btn = document.getElementById('filterToggle');
+  btn.classList.toggle('active', filterActive);
+  if (rawRows.length) { allAgents = processRows(rawRows); renderTable(); }
+}
+function t2s(t) {
+  if (!t) return 0;
+  const p = t.split(':');
+  return p.length===3 ? +p[0]*3600 + +p[1]*60 + +p[2] : p.length===2 ? +p[0]*60 + +p[1] : 0;
+}
+function s2mm(s) {
+  return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.round(s%60)).padStart(2,'0')}`;
+}
+function processRows(rows) {
+  rawRows = rows;
+  const keys = Object.keys(rows[0]||{});
+  const fc = (...ns) => keys.find(k=>ns.some(n=>k.toLowerCase().includes(n.toLowerCase())));
+  const cA=fc('Agente','agente'), cE=fc('Espera','espera'), cT=fc('Atendimento','atend'), cV=fc('Avaliação','avaliacao','aval','nota');
+  if (!cA) { alert('Coluna "Agente" não encontrada.'); return []; }
+  const g={};
+  for (const r of rows) {
+    const ag=r[cA]||'';
+    if (!ag||ag.toLowerCase().includes('yago daniel')) continue;
+    if (filterActive && cT && t2s(r[cT]) < 60) continue;
+    if (!g[ag]) g[ag]=[];
+    g[ag].push(r);
+  }
+  return Object.entries(g).map(([name,grp])=>{
+    const n=grp.length;
+    const tme=grp.reduce((s,r)=>s+t2s(cE?r[cE]:''),0)/n;
+    const tma=grp.reduce((s,r)=>s+t2s(cT?r[cT]:''),0)/n;
+    const wa=grp.filter(r=>cV&&r[cV]!==''&&!isNaN(parseFloat(r[cV])));
+    const c45=wa.filter(r=>{const v=parseFloat(r[cV]);return v===4||v===5;});
+    let id='',dn=name;
+    const m=name.match(/^(\d+)\s*-\s*(.+)$/);
+    if(m){id=m[1];dn=m[2];}
+    return{nome:dn,id,total:n,tme_sec:tme,tma_sec:tma,tme:s2mm(tme),tma:s2mm(tma),
+      taxa_avaliacao:Math.round(wa.length/n*1000)/10,
+      csat:wa.length>0?Math.round(c45.length/wa.length*1000)/10:0};
+  });
+}
+function cFor(v,[lo,hi],inv=false){
+  return inv?(v<=lo?'var(--good)':v<=hi?'var(--mid)':'var(--bad)'):(v>=hi?'var(--good)':v>=lo?'var(--mid)':'var(--bad)');
+}
+function pClass(v,[lo,hi],inv=false){
+  return inv?(v<=lo?'pill-good':v<=hi?'pill-mid':'pill-bad'):(v>=hi?'pill-good':v>=lo?'pill-mid':'pill-bad');
+}
+function bar(v,max,col){
+  return `<div class="bar-track"><div class="bar-fill" style="width:${max>0?Math.min(100,v/max*100):0}%;background:${col}"></div></div>`;
+}
+function renderTable(){
+  const tb=document.getElementById('tbody');
+  if(!allAgents.length){
+    tb.innerHTML=`<tr><td colspan="6"><div class="empty"><svg width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><p>Importe um arquivo CSV para visualizar os dados</p></div></td></tr>`;
+    return;
+  }
+  const s=[...allAgents].sort((a,b)=>sortField==='nome'?sortDir*a.nome.localeCompare(b.nome):sortDir*(a[sortField]-b[sortField]));
+  const mTme=Math.max(...s.map(a=>a.tme_sec)), mTma=Math.max(...s.map(a=>a.tma_sec));
+  document.querySelectorAll('.sort-btn').forEach(b=>{
+    const t=b.textContent.trim();
+    b.classList.toggle('active',(t==='TME'&&sortField==='tme_sec')||(t==='TMA'&&sortField==='tma_sec')||
+      (t==='Taxa Aval.'&&sortField==='taxa_avaliacao')||(t==='Atend.'&&sortField==='total')||
+      (t==='Nome'&&sortField==='nome')||(t==='CSAT'&&sortField==='csat'));
+  });
+  tb.innerHTML=s.map(a=>{
+    const tc=cFor(a.tme_sec,[120,200],true), mc=cFor(a.tma_sec,[200,400]);
+    return`<tr>
+      <td><div class="agent-name">${a.nome}</div>${a.id?`<span class="agent-id">Ramal ${a.id}</span>`:''}</td>
+      <td><span class="mono">${a.total.toLocaleString('pt-BR')}</span></td>
+      <td class="bar-cell"><div class="bar-wrap">${bar(a.tme_sec,mTme,tc)}<span class="bar-label" style="color:${tc}">${a.tme}</span></div></td>
+      <td class="bar-cell"><div class="bar-wrap">${bar(a.tma_sec,mTma,mc)}<span class="bar-label" style="color:${mc}">${a.tma}</span></div></td>
+      <td><span class="pill ${pClass(a.taxa_avaliacao,[25,35])}">${a.taxa_avaliacao}%</span></td>
+      <td><span class="pill ${pClass(a.csat,[85,90])}">${a.csat}%</span></td>
+    </tr>`;
+  }).join('');
+  const tot=allAgents.reduce((s,a)=>s+a.total,0);
+  document.getElementById('s-agents').textContent=allAgents.length;
+  document.getElementById('s-total').textContent=tot.toLocaleString('pt-BR');
+  document.getElementById('s-tme').textContent=s2mm(allAgents.reduce((s,a)=>s+a.tme_sec,0)/allAgents.length);
+  document.getElementById('s-tma').textContent=s2mm(allAgents.reduce((s,a)=>s+a.tma_sec,0)/allAgents.length);
+  document.getElementById('s-taxa').textContent=(allAgents.reduce((s,a)=>s+a.taxa_avaliacao,0)/allAgents.length).toFixed(1)+'%';
+  document.getElementById('s-csat').textContent=(allAgents.reduce((s,a)=>s+a.csat,0)/allAgents.length).toFixed(1)+'%';
+  document.getElementById('summary').style.display='';
+  document.getElementById('controls').style.display='';
+}
+function sortBy(f){
+  sortDir=sortField===f?sortDir*-1:(f==='tme_sec'||f==='tma_sec'?1:-1);
+  sortField=f; renderTable();
+}
+function handleFile(file){
+  if(!file||!file.name.endsWith('.csv')){alert('Envie um arquivo .csv');return;}
+  document.getElementById('fileLabel').textContent=`${file.name}  ·  ${(file.size/1024).toFixed(1)} KB`;
+  const r=new FileReader();
+  r.onload=e=>{allAgents=processRows(parseCSV(e.target.result));renderTable();};
+  r.readAsText(file,'UTF-8');
+}
+document.getElementById('fileInput').addEventListener('change',e=>handleFile(e.target.files[0]));
+document.body.addEventListener('dragover',e=>{e.preventDefault();document.body.classList.add('dragover');});
+document.body.addEventListener('dragleave',()=>document.body.classList.remove('dragover'));
+document.body.addEventListener('drop',e=>{e.preventDefault();document.body.classList.remove('dragover');handleFile(e.dataTransfer.files[0]);});
+
+allAgents=[
+  {nome:"Eduarda Rodrigues Carvalho",id:"2016",total:735, tme_sec:198.7,tma_sec:437.7,tme:"03:18",tma:"07:17",taxa_avaliacao:38.9,csat:89.9},
+  {nome:"Katlheen Camilla",          id:"2021",total:814, tme_sec:185.0,tma_sec:268.2,tme:"03:04",tma:"04:28",taxa_avaliacao:19.4,csat:86.7},
+  {nome:"Maria Julia dos Santos",    id:"2028",total:422, tme_sec:190.3,tma_sec:478.8,tme:"03:10",tma:"07:58",taxa_avaliacao:45.0,csat:92.6},
+  {nome:"Thauane Borges",            id:"2038",total:467, tme_sec:175.1,tma_sec:715.0,tme:"02:55",tma:"11:55",taxa_avaliacao:35.1,csat:94.5},
+  {nome:"Rafaela Wayne",             id:"2086",total:536, tme_sec:236.5,tma_sec:503.5,tme:"03:56",tma:"08:23",taxa_avaliacao:37.3,csat:87.5},
+  {nome:"Emily Freitas",             id:"2094",total:947, tme_sec:150.6,tma_sec:262.7,tme:"02:30",tma:"04:22",taxa_avaliacao:23.5,csat:91.0},
+  {nome:"Ana Julia Belagamba",       id:"2146",total:864, tme_sec:147.5,tma_sec:376.3,tme:"02:27",tma:"06:16",taxa_avaliacao:20.0,csat:94.2},
+  {nome:"Ana Luiza Borges",          id:"",    total:941, tme_sec:152.3,tma_sec:218.4,tme:"02:32",tma:"03:38",taxa_avaliacao:20.1,csat:91.5},
+  {nome:"Isabelle Mota",             id:"",    total:1065,tme_sec:134.4,tma_sec:282.9,tme:"02:14",tma:"04:42",taxa_avaliacao:14.0,csat:85.2},
+  {nome:"Luciana Neres Isabelle",    id:"",    total:675, tme_sec:128.1,tma_sec:273.2,tme:"02:08",tma:"04:33",taxa_avaliacao:25.0,csat:96.4},
+];
+document.getElementById('fileLabel').textContent='Chamadas_Detalhado_29-04-2026.csv  ·  Dados carregados';
+renderTable();
+</script>
+</body>
+</html>
